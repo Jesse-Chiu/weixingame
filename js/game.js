@@ -2,9 +2,9 @@ $(function() {
 	//预加载图片
 	var loadingImgs = ["img/activity_rule.png", "img/bg.jpg", "img/bg2.png", "img/close.png", "img/p1_btns_wrap.png", "img/p1_first.png", "img/p1_from.png", "img/p1_second.png", "img/p1_sub.png", "img/p1_third.png", "img/p2_kuang.png", "img/p2_qian.jpg", "img/p2_scoring.png", "img/p2_shou.png", "img/p2_txt1.png", "img/p2_txt2.png", "img/p2_txt3.png", "img/p2_zhuan.png", "img/p3_acquire.png", "img/p3_again.png", "img/p3_bg.jpg", "img/p3_share.png", "img/p3_share_btn.png", "img/prize.png", "img/qian.png", "img/ranking.png", "img/ranking_bg.png", "img/shiyong.png", "img/shizhong.png", "img/shou.png", "img/start_game.png", "img/tiaozhan.png", "img/yingqu.png"];
 	//依次创建img对象,完成预加载
-	var times = 0; //记录加载成功的图片次数
+	var img,times = 0; //记录加载成功的图片次数
 	for (var i = 0; i < loadingImgs.length; i++) {
-		var img = new Image();
+		img = new Image();
 		img.src = loadingImgs[i];
 		img.onload = function() {
 			times++;
@@ -19,23 +19,25 @@ $(function() {
 
 		}
 	}
-//第一界面
+	//第一界面
 	//单击开始按钮
 	$(".start").on("touchstart", function() {
-			$(".user_alert").show();
-			$(".submit_btn").on("touchend", function() {
-				//跳转到第二界面
+		//		$(".user_alert").show();
+		//		$(".submit_btn").on("touchend", function() {
+		//跳转到第二界面
 
-				$(this).parent().parent().hide();
-				$('#page1').hide();
-				$('#page2').show();
-				//用户数据
-				userData();
-					
-			});
+		//			$(this).parent().parent().hide();
+		$(this).parent().hide();
+		$('#page1').hide();
+		$('#page2').show();
+		page_two();
+		//用户数据
+		userData();
+
+		//		});
 
 	});
-		//关闭提示框
+	//关闭提示框
 	$('.close').on('touchend', function() {
 			$(this).parent().hide();
 		})
@@ -56,102 +58,109 @@ $(function() {
 	//第二页面
 	//变换的标题
 	//存储图片
-	var imgI = 0;
-	setInterval(function() {
+	var imgI = 0,
+		txtTimer,
+		gameStart = false,
+		moneyNum = 0,
+		str,
+		timer,
+		time,
+		spread;
+
+	function page_two() {
+		txtTimer = setInterval(function() {
 			imgI++;
 			imgnum = imgI % 3 + 1
 			$(".textTalk").attr("src", 'img/p2_txt' + imgnum + '.png')
-		}, 1000)
+		}, 1000);
 		//单手指向上滑动开始数钱
-	var spread = 0;
-	$("#money_wrap").on("swipeup", function() {
-		spread++;
-//		$(this).on('swipeend', function() {
+		spread = 0;
+		$("#money_wrap").on("swipeup", function(eve) {
+			//禁止系统自带事件
+			eve.preventDefault();
+			spread++;
 			//开始游戏 倒计时开启
-			if (spread == 1) {
-				downTime(10);
-			}
+			downTime(10);
 			$("<img>").addClass('money animated fadeOutUpBig').attr('src', "img/p2_qian.jpg").appendTo($("#money_wrap"));
 			setTimeout(function() {
 				$('.fadeOutUpBig').remove();
-			}, 300);
-			if (spread < 10) {
-				$('.count_num').eq(2).text(spread);
-			} else if (spread < 100 && spread > 9) {
-				$('.count_num').eq(1).text(Math.floor(spread / 10));
-				$('.count_num').eq(2).text(spread % 10);
-			} else if (spread > 99) {
-				$('.count_num').eq(0).text(Math.floor(spread / 100));
-				$('.count_num').eq(1).text(Math.floor(spread % 100 / 10));
-				$('.count_num').eq(2).text(spread % 10);
-			}
-			
-//		});
+			}, 330);
+			moneyNum = "00" + spread;
+			str = moneyNum.substr(-3);
+			//显示分数
+			$('.count_num').eq(0).html(str[0]);
+			$('.count_num').eq(1).html(str[1]);
+			$('.count_num').eq(2).html(str[2]);
+		});
+	}
 
-	});
 	//倒计时函数
-	function downTime(time) {
-		$('.time_clock').text(time);
-		var timer = setInterval(function() {
-			time--;
-			if (time > 0) {
-				$('.time_clock').text(time);
-			} else {
-				//当时间小于0是当前界面消失,第三界面显示
-				//初始化
-				clearInterval(timer)
-				$('#page2').hide();
-				page3Event();
-				$('#page3').show();
-			}
 
-		}, 1000);
+	function downTime(time) {
+		if (gameStart == false) {
+			gameStart = true;
+			$('.time_clock').text(time);
+			timer = setInterval(function() {
+				time--;
+				$('.time_clock').text(time);
+				if (time == 0) {
+					//当时间等于0是当前界面消失,第三界面显示
+					//初始化
+					clearInterval(timer);
+					clearInterval(txtTimer);
+					$('#page2').hide();
+					$('#page3').show();
+					page3Event();
+					gameStart = false;
+				}
+
+			}, 1000);
+		}
+
 	}
 
 	//第三界面
 	//获取第二界面的数据 并在该界面显示
 	function page3Event() {
 		//数的总钱数
-		$('#result_money').text('¥' + (spread)*100);
-		$('#best_sum').text((spread)*100);
-		if(spread>30 && spread<35){
+		$('#result_money').text('¥' + (spread) * 100);
+		$('#best_sum').text((spread) * 100);
+		if (spread > 30 && spread < 35) {
 			$('#best_rank').text(5);
-		}else if(spread>35 && spread<40){
+		} else if (spread > 35 && spread < 40) {
 			$('#best_rank').text(3);
-		}else if(spread>40){
+		} else if (spread > 40) {
 			$('#best_rank').text(2);
 		}
 		//再来一次
 		$('.again').on("touchend", function() {
-			location.reload();
-	
+			$('#page3').hide();
+			$('#page2').show();
+			$('.count_num').text("0");
+			$('.time_clock').text("10");
+			spread = 0;
+
 		});
 		//分享
-		$('.share').on('touchend',function(){
-			$('.share_laert').show().on('touchend',function(){
+		$('.share').on('touchend', function() {
+			$('.share_laert').show().on('touchend', function() {
 				$(this).hide();
 			});
-			$(".share_btn").on('touchend',function(){
-				
+			$(".share_btn").on('touchend', function() {
+
 			})
 		})
 	}
 
-//					获取用户数据	
-
-		function userData(){
-			var userNm = $('.user_name').val();
-			var userPo = $('.user_phone').val();
-			var userID = $('.user_address').val();
-			localStorage.setItem("name",userNm);
-			localStorage.setItem("phone",userPo);
-			localStorage.setItem("ID",userID);
-		}
-				
-			
-
-
-
-
+	//					获取用户数据	
+	var userNm, userPo, userID;
+function userData() {
+		userNm = $('.user_name').val();
+		userPo = $('.user_phone').val();
+		userID = $('.user_address').val();
+		localStorage.setItem("name", userNm);
+		localStorage.setItem("phone", userPo);
+		localStorage.setItem("ID", userID);
+	}
 
 });
